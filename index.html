@@ -95,6 +95,21 @@ main{padding:6px 14px 60px;max-width:760px;margin:0 auto}
 .grade .g{font-weight:700;font-size:14px;min-width:0;flex:1}
 .grade .g small{display:block;font-weight:400;color:var(--sub);font-size:12px;line-height:1.5}
 .grade .p{font-weight:700;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.size{background:var(--accent-weak);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.6}
+.size b{display:block;font-size:11px;color:var(--accent);letter-spacing:.04em;margin-bottom:2px}
+.pc{display:grid;gap:8px}
+.pc div{border-radius:10px;padding:8px 10px 6px;background:var(--soft)}
+.pc b{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;margin-bottom:4px}
+.pc .good b{color:var(--accent)} .pc .bad b{color:var(--t-speed)}
+.pc ul{margin:0;padding:0;list-style:none}
+.pc li{position:relative;padding-left:18px;margin-bottom:5px;font-size:13.5px;line-height:1.55}
+.pc .good li::before{content:"＋";position:absolute;left:0;color:var(--accent);font-weight:700}
+.pc .bad li::before{content:"－";position:absolute;left:0;color:var(--t-speed);font-weight:700}
+.refs{margin:8px 0 0;padding:0;list-style:none;font-size:12.5px}
+.refs li{margin:3px 0}
+.refs a{color:var(--accent);text-decoration:none;word-break:break-all}
+.refs a::after{content:" ↗";font-size:11px}
+.hint{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.5}
 .close{display:block;width:100%;margin-top:14px;border:0;background:var(--soft);color:var(--sub);border-radius:10px;padding:9px;font-size:13px}
 .empty{text-align:center;color:var(--sub);padding:50px 0;line-height:1.9}
 
@@ -155,6 +170,20 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
       </table>
     </section>
     <section>
+      <h2>ブランド別サイズ感の目安</h2>
+      <table>
+        <tr><th>ブランド</th><th>傾向</th></tr>
+        <tr><td><b>Nike</b></td><td>甲まわりが細め。マーキュリアルは特に細身。公式は多くのモデルで「ゆったり好きならハーフサイズ上」</td></tr>
+        <tr><td><b>adidas</b></td><td>標準〜やや大きめ、幅は標準。プレデターはハーフサイズ上げる人も多い</td></tr>
+        <tr><td><b>PUMA</b></td><td>モデル差が大きい。ウルトラは0.5cm下げる人も、キングは0.5cm上げる人も</td></tr>
+        <tr><td><b>Mizuno</b></td><td>実寸に近い表記。モレリアは2E相当、モナルシーダのワイドは3E相当でゆったり</td></tr>
+        <tr><td><b>ASICS</b></td><td>実寸に近い表記。幅広・甲高に対応しやすく、WIDE展開も多い</td></tr>
+        <tr><td><b>New Balance</b></td><td>普通〜やや小さめ。足幅を2種類から選べるモデルが多い</td></tr>
+        <tr><td><b>Umbro</b></td><td>幅はナイキ・プーマより広く、アシックスより狭い。ワイド版も多い</td></tr>
+      </table>
+      <p class="note">天然皮革（カンガルーなど）は履くうちに伸びるので、ぴったりめを選ぶ人が多い。口コミは足型で大きく変わるので、できれば試着を。</p>
+    </section>
+    <section>
       <h2>グレード対応表（上から高い順）</h2>
       <div class="scroll"><table>
         <tr><th>Nike</th><th>adidas</th><th>PUMA</th><th>Mizuno</th></tr>
@@ -187,11 +216,12 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
         <tr><td style="white-space:nowrap"><span class="tdot" style="background:var(--t-classic)"></span>クラシック</td><td>Copa Mundial / Morelia II / Premier 3 / 442</td></tr>
       </table>
     </section>
-    <p class="note">情報は2026年11月時点でネット上の情報をもとにまとめた目安です。価格はカラー・時期・店舗で変わります。</p>
+    <p class="note">情報は2026年11月時点で、メーカー・販売店の情報と、販売店レビュー・個人ブログ・海外レビューの口コミをもとにまとめた目安です。価格はカラー・時期・店舗で変わります。</p>
   </div>
 </main>
 
 <script src="data.js"></script>
+<script src="reviews.js"></script>
 <script>
 (function(){
   var data = window.SPIKES || [];
@@ -205,6 +235,8 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
     s = s.replace(/[ぁ-ゖ]/g, function(c){return String.fromCharCode(c.charCodeAt(0)+0x60);});
     return s.replace(/[\s\-・\/()（）.'"]/g,"").replace(/ー/g,"");
   }
+  var RV = window.REVIEWS || {};
+  data.forEach(function(d){ d.rv = RV[d.n] || null; });
   var seriesOrder = {};
   data.forEach(function(d,i){
     d._k = norm(d.n+" "+d.s+" "+d.b+" "+(d.al||""));
@@ -255,6 +287,21 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
       + (d.gr&&d.gr.length?'<span class="price">'+esc(priceRange(d))+'</span>':'')+'</div>'
       + '<div class="sum">'+esc(d.sum)+'</div></summary><div class="body">';
     if(d.ft&&d.ft.length) h += '<h3>特徴</h3><ul class="feat">'+d.ft.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul>';
+    if(d.rv){
+      var r=d.rv;
+      h += '<h3>サイズ感</h3><div class="size">'+esc(r.sz)+'</div>';
+      if((r.pro&&r.pro.length)||(r.con&&r.con.length)){
+        h += '<h3>評判・口コミ</h3><div class="pc">'
+          + (r.pro&&r.pro.length?'<div class="good"><b>良い評判</b><ul>'+r.pro.map(li).join("")+'</ul></div>':'')
+          + (r.con&&r.con.length?'<div class="bad"><b>気になる点</b><ul>'+r.con.map(li).join("")+'</ul></div>':'')
+          + '</div>';
+      }
+      if(r.ref&&r.ref.length){
+        h += '<p class="hint" style="margin-top:10px">参考にした記事・レビュー</p><ul class="refs" style="margin-top:2px">'+r.ref.map(function(x){return '<li><a href="'+esc(x[1])+'" target="_blank" rel="noopener">'+esc(x[0])+'</a></li>';}).join("")+'</ul>';
+      } else {
+        h += '<p class="hint">※このモデルは口コミが少ないため、同シリーズ・ブランドの傾向をもとにした目安です。</p>';
+      }
+    }
     var info = box("フィット",d.fit)+box("重さ",d.wt)+box("向いている人",d.pl,1)+box("前作との違い",d.df,1)+box("見分け方",d.lk,1)+box("展開（ソール）",d.v,1);
     if(info) h += '<h3>くわしく</h3><dl class="info">'+info+'</dl>';
     if(d.gr&&d.gr.length){
@@ -264,6 +311,7 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
     }
     return h + '<button class="close" type="button">閉じる ▲</button></div></details>';
   }
+  function li(x){ return '<li>'+esc(x)+'</li>'; }
   function box(k,v,wide){ return v ? '<div'+(wide?' class="wide"':'')+'><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>' : ""; }
   function yen(n){ return n.toLocaleString("ja-JP"); }
   function priceRange(d){
