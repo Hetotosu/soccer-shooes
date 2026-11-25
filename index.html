@@ -110,6 +110,13 @@ main{padding:6px 14px 60px;max-width:760px;margin:0 auto}
 .refs a{color:var(--accent);text-decoration:none;word-break:break-all}
 .refs a::after{content:" ↗";font-size:11px}
 .hint{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.5}
+.chg{border:1px solid var(--line);border-radius:10px;padding:9px 11px 5px}
+.chg .vs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-bottom:7px}
+.chg .vs button{border:0;background:var(--accent-weak);color:var(--accent);font-weight:700;font-size:12px;border-radius:999px;padding:3px 10px}
+.chg .vs span.old{background:var(--chip);color:var(--text);font-weight:700;border-radius:999px;padding:3px 10px}
+.chg ol{margin:0;padding:0;list-style:none;counter-reset:c}
+.chg ol li{position:relative;padding-left:24px;margin-bottom:7px;font-size:13.5px;line-height:1.55;counter-increment:c}
+.chg ol li::before{content:counter(c);position:absolute;left:0;top:1px;width:17px;height:17px;border-radius:50%;background:var(--tc,var(--accent));color:#fff;font-size:10.5px;font-weight:700;text-align:center;line-height:17px}
 .close{display:block;width:100%;margin-top:14px;border:0;background:var(--soft);color:var(--sub);border-radius:10px;padding:9px;font-size:13px}
 .empty{text-align:center;color:var(--sub);padding:50px 0;line-height:1.9}
 
@@ -222,6 +229,7 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
 
 <script src="data.js"></script>
 <script src="reviews.js"></script>
+<script src="changes.js"></script>
 <script>
 (function(){
   var data = window.SPIKES || [];
@@ -235,8 +243,8 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
     s = s.replace(/[ぁ-ゖ]/g, function(c){return String.fromCharCode(c.charCodeAt(0)+0x60);});
     return s.replace(/[\s\-・\/()（）.'"]/g,"").replace(/ー/g,"");
   }
-  var RV = window.REVIEWS || {};
-  data.forEach(function(d){ d.rv = RV[d.n] || null; });
+  var RV = window.REVIEWS || {}, CH = window.CHANGES || {}, byName = {};
+  data.forEach(function(d){ d.rv = RV[d.n] || null; d.ch = CH[d.n] || null; byName[d.n] = d; });
   var seriesOrder = {};
   data.forEach(function(d,i){
     d._k = norm(d.n+" "+d.s+" "+d.b+" "+(d.al||""));
@@ -287,6 +295,14 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
       + (d.gr&&d.gr.length?'<span class="price">'+esc(priceRange(d))+'</span>':'')+'</div>'
       + '<div class="sum">'+esc(d.sum)+'</div></summary><div class="body">';
     if(d.ft&&d.ft.length) h += '<h3>特徴</h3><ul class="feat">'+d.ft.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul>';
+    if(d.ch){
+      var c=d.ch, pv=c.prev||c.pl;
+      h += '<h3>前作からの変更点</h3><div class="chg"><div class="vs">比較：'
+        + (c.prev&&byName[c.prev] ? '<button type="button" class="goprev" data-n="'+esc(c.prev)+'">'+esc(c.prev)+' を見る ›</button>' : '<span class="old">'+esc(pv)+'</span>')
+        + '</div><ol>'+c.ch.map(li).join("")+'</ol>'
+        + (c.ref&&c.ref.length ? refs(c.ref) : '')
+        + '</div>';
+    }
     if(d.rv){
       var r=d.rv;
       h += '<h3>サイズ感</h3><div class="size">'+esc(r.sz)+'</div>';
@@ -297,12 +313,12 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
           + '</div>';
       }
       if(r.ref&&r.ref.length){
-        h += '<p class="hint" style="margin-top:10px">参考にした記事・レビュー</p><ul class="refs" style="margin-top:2px">'+r.ref.map(function(x){return '<li><a href="'+esc(x[1])+'" target="_blank" rel="noopener">'+esc(x[0])+'</a></li>';}).join("")+'</ul>';
+        h += refs(r.ref);
       } else {
         h += '<p class="hint">※このモデルは口コミが少ないため、同シリーズ・ブランドの傾向をもとにした目安です。</p>';
       }
     }
-    var info = box("フィット",d.fit)+box("重さ",d.wt)+box("向いている人",d.pl,1)+box("前作との違い",d.df,1)+box("見分け方",d.lk,1)+box("展開（ソール）",d.v,1);
+    var info = box("フィット",d.fit)+box("重さ",d.wt)+box("向いている人",d.pl,1)+(d.ch?"":box("前作との違い",d.df,1))+box("見分け方",d.lk,1)+box("展開（ソール）",d.v,1);
     if(info) h += '<h3>くわしく</h3><dl class="info">'+info+'</dl>';
     if(d.gr&&d.gr.length){
       h += '<h3>グレードと価格（定価目安）</h3><div class="grades">'
@@ -310,6 +326,10 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
         + '</div>';
     }
     return h + '<button class="close" type="button">閉じる ▲</button></div></details>';
+  }
+  function refs(a){
+    return '<p class="hint" style="margin-top:10px">参考にした記事・レビュー</p><ul class="refs" style="margin-top:2px">'
+      + a.map(function(x){return '<li><a href="'+esc(x[1])+'" target="_blank" rel="noopener">'+esc(x[0])+'</a></li>';}).join("")+'</ul>';
   }
   function li(x){ return '<li>'+esc(x)+'</li>'; }
   function box(k,v,wide){ return v ? '<div'+(wide?' class="wide"':'')+'><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>' : ""; }
@@ -351,6 +371,9 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
   bindChips(document.getElementById("brandChips"), BRANDS, "brand");
   bindChips(document.getElementById("typeChips"), TYPES, "type");
   document.getElementById("list").addEventListener("click", function(e){
+    var gp = e.target.closest(".goprev");
+    if(gp){ state={q:gp.dataset.n,brand:"すべて",type:"すべて"}; qEl.value=gp.dataset.n; render(); window.scrollTo(0,0);
+      var first=document.querySelector("#results details"); if(first) first.open=true; return; }
     if(e.target.id==="reset"){ state={q:"",brand:"すべて",type:"すべて"}; qEl.value=""; render(); return; }
     if(e.target.classList.contains("close")){
       var c = e.target.closest("details"); c.open=false;
