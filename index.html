@@ -62,11 +62,9 @@ main{padding:6px 14px 60px;max-width:760px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;overflow:hidden;box-shadow:var(--shadow);
   border-left:4px solid var(--tc,var(--line))}
 .card.old{opacity:.92}
-.card summary{list-style:none;padding:11px 12px 11px 12px;cursor:pointer;position:relative}
-.card summary::-webkit-details-marker{display:none}
-.card summary::after{content:"";position:absolute;right:14px;top:17px;width:7px;height:7px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);
-  transform:rotate(45deg);transition:transform .2s}
-.card[open] summary::after{transform:rotate(225deg);top:21px}
+.card{display:block;padding:11px 12px;cursor:pointer;position:relative;-webkit-user-select:none;user-select:none;transition:transform .08s}
+.card:active{transform:scale(.985)}
+.card::after{content:"";position:absolute;right:15px;top:19px;width:7px;height:7px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(-45deg)}
 .row1{display:flex;align-items:center;gap:6px;padding-right:22px}
 .name{font-weight:800;font-size:16.5px;line-height:1.35}
 .badge{flex:0 0 auto;font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px;line-height:1.5}
@@ -78,8 +76,23 @@ main{padding:6px 14px 60px;max-width:760px;margin:0 auto}
 .meta .price{margin-left:auto;color:var(--text);font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
 .sum{margin-top:6px;font-size:14px;line-height:1.65}
 
-.body{padding:2px 14px 14px;border-top:1px dashed var(--line)}
+/* ---------- popup ---------- */
+#modal{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) 10px max(12px,env(safe-area-inset-bottom))}
+#modal[hidden]{display:none!important}
+.backdrop{position:absolute;inset:0;background:rgba(10,14,12,.55);opacity:0;transition:opacity .2s}
+.sheet{position:relative;width:100%;max-width:560px;max-height:min(100%,82vh);max-height:min(100%,82dvh);display:flex;flex-direction:column;background:var(--card);border-radius:18px;
+  border-top:5px solid var(--tc,var(--accent));box-shadow:0 12px 40px rgba(0,0,0,.3);transform:translateY(24px) scale(.97);opacity:0;transition:transform .22s,opacity .2s}
+#modal.show .backdrop{opacity:1}
+#modal.show .sheet{transform:none;opacity:1}
+.sheet-head{padding:12px 50px 10px 16px;border-bottom:1px solid var(--line);position:relative}
+.sheet-head .name{font-size:18px}
+.sheet-head .brand{font-size:12px;color:var(--faint);font-weight:600;margin-bottom:1px}
+.x{position:absolute;right:10px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:var(--chip);color:var(--text);font-size:18px;line-height:34px;padding:0}
+.sheet-body{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+body.lock{overflow:hidden}
+.body{padding:0 16px 16px}
 .body h3{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);margin:16px 0 8px}
+.body .sum{margin-top:12px;color:var(--text)}
 .body h3::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--tc,var(--accent))}
 .feat{margin:0;padding:0;list-style:none}
 .feat li{position:relative;padding-left:16px;margin-bottom:6px;font-size:14px}
@@ -227,6 +240,15 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
   </div>
 </main>
 
+<div id="modal" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="sheet-head" id="mHead"></div>
+    <button class="x" type="button" aria-label="閉じる" data-close>✕</button>
+    <div class="sheet-body" id="mBody"></div>
+  </div>
+</div>
+
 <script src="data.js"></script>
 <script src="reviews.js"></script>
 <script src="changes.js"></script>
@@ -288,12 +310,17 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
   }
 
   function card(d){
-    var h = '<details class="card '+d.st+'" style="--tc:'+tvar(d.c)+'"><summary>'
-      + '<div class="row1"><span class="name">'+esc(d.n)+'</span>'
+    return '<div class="card '+d.st+'" role="button" tabindex="0" data-n="'+esc(d.n)+'" style="--tc:'+tvar(d.c)+'">'
+      + head(d) + '<div class="sum">'+esc(d.sum)+'</div></div>';
+  }
+  function head(d, id){
+    return '<div class="row1"><span class="name"'+(id?' id="'+id+'"':'')+'>'+esc(d.n)+'</span>'
       + '<span class="badge '+d.st+'">'+(d.st==="now"?"現行":"型落ち")+'</span></div>'
       + '<div class="meta"><span class="type">'+esc(d.c)+'</span><span>'+esc(d.y)+'年</span>'
-      + (d.gr&&d.gr.length?'<span class="price">'+esc(priceRange(d))+'</span>':'')+'</div>'
-      + '<div class="sum">'+esc(d.sum)+'</div></summary><div class="body">';
+      + (d.gr&&d.gr.length?'<span class="price">'+esc(priceRange(d))+'</span>':'')+'</div>';
+  }
+  function detail(d){
+    var h = '<div class="body"><div class="sum">'+esc(d.sum)+'</div>';
     if(d.ft&&d.ft.length) h += '<h3>特徴</h3><ul class="feat">'+d.ft.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul>';
     if(d.ch){
       var c=d.ch, pv=c.prev||c.pl;
@@ -325,7 +352,7 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
         + d.gr.map(function(g){return '<div class="grade"><div class="g">'+esc(g[0])+(g[2]?'<small>'+esc(g[2])+'</small>':'')+'</div><div class="p">'+esc(g[1])+'</div></div>';}).join("")
         + '</div>';
     }
-    return h + '<button class="close" type="button">閉じる ▲</button></div></details>';
+    return h + '<button class="close" type="button" data-close>閉じる</button></div>';
   }
   function refs(a){
     return '<p class="hint" style="margin-top:10px">参考にした記事・レビュー</p><ul class="refs" style="margin-top:2px">'
@@ -371,16 +398,44 @@ td.p{white-space:nowrap;font-variant-numeric:tabular-nums}
   bindChips(document.getElementById("brandChips"), BRANDS, "brand");
   bindChips(document.getElementById("typeChips"), TYPES, "type");
   document.getElementById("list").addEventListener("click", function(e){
-    var gp = e.target.closest(".goprev");
-    if(gp){ state={q:gp.dataset.n,brand:"すべて",type:"すべて"}; qEl.value=gp.dataset.n; render(); window.scrollTo(0,0);
-      var first=document.querySelector("#results details"); if(first) first.open=true; return; }
     if(e.target.id==="reset"){ state={q:"",brand:"すべて",type:"すべて"}; qEl.value=""; render(); return; }
-    if(e.target.classList.contains("close")){
-      var c = e.target.closest("details"); c.open=false;
-      var top = c.getBoundingClientRect().top - document.querySelector("header").offsetHeight - 8;
-      if(top<0) window.scrollBy(0, top);
-    }
+    var c = e.target.closest(".card"); if(c) openModal(byName[c.dataset.n]);
   });
+  document.getElementById("list").addEventListener("keydown", function(e){
+    var c = e.target.closest && e.target.closest(".card");
+    if(c && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); openModal(byName[c.dataset.n]); }
+  });
+
+  // ---------- ポップアップ ----------
+  var modal=document.getElementById("modal"), mHead=document.getElementById("mHead"), mBody=document.getElementById("mBody"),
+      sheet=modal.querySelector(".sheet"), lastFocus=null, pushed=false;
+  function fill(d){
+    sheet.style.setProperty("--tc", tvar(d.c));
+    mHead.innerHTML = '<div class="brand">'+esc(d.b)+' · '+esc(d.s==="Futsal"?"フットサル":d.s)+'</div>'+head(d,"mTitle");
+    mBody.innerHTML = detail(d); mBody.scrollTop = 0;
+  }
+  function openModal(d){
+    if(!d) return;
+    lastFocus=document.activeElement; fill(d);
+    modal.hidden=false; document.body.classList.add("lock");
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ modal.classList.add("show"); }); });
+    if(!pushed){ history.pushState({spike:1},""); pushed=true; }
+    modal.querySelector(".x").focus({preventScroll:true});
+  }
+  function hideModal(){
+    if(modal.hidden) return;
+    modal.classList.remove("show"); document.body.classList.remove("lock");
+    setTimeout(function(){ if(!modal.classList.contains("show")) modal.hidden=true; }, 200);
+    if(lastFocus&&lastFocus.focus) lastFocus.focus({preventScroll:true});
+  }
+  function closeModal(){ if(pushed){ history.back(); } else hideModal(); }   // 戻るボタンでも閉じられるように履歴を使う
+  window.addEventListener("popstate", function(){ pushed=false; hideModal(); });
+  modal.addEventListener("click", function(e){
+    if(e.target.closest("[data-close]")){ closeModal(); return; }
+    var gp = e.target.closest(".goprev");
+    if(gp){ fill(byName[gp.dataset.n]); }
+  });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape" && !modal.hidden) closeModal(); });
 
   var tl=document.getElementById("tabList"), tg=document.getElementById("tabGuide");
   function tab(g){
